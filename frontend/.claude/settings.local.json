@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:typeracer.fandom.com)",
+      "Bash(npm install)"
+    ]
+  }
+}
