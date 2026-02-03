@@ -62,6 +62,16 @@
       <span class="font-bold text-blue-600">{{ overallBest }} WPM</span>
     </div>
 
+    <!-- Sign Up Prompt for Guest Users -->
+    <div v-if="isGuest && !promptDismissed" class="mb-6">
+      <SignUpPrompt
+        :race-count="localRaceCount"
+        @signup="$emit('showAuth', 'register')"
+        @signin="$emit('showAuth', 'login')"
+        @dismiss="promptDismissed = true"
+      />
+    </div>
+
     <!-- Action Buttons -->
     <div class="text-center flex justify-center gap-4">
       <button
@@ -81,6 +91,10 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import { useAuth } from '../composables/useAuth'
+import SignUpPrompt from './SignUpPrompt.vue'
+
 defineProps({
   results: {
     type: Object,
@@ -92,7 +106,11 @@ defineProps({
   }
 })
 
-defineEmits(['raceAgain', 'viewStats'])
+defineEmits(['raceAgain', 'viewStats', 'showAuth'])
+
+const { isGuest, getLocalRaceCount } = useAuth()
+const localRaceCount = getLocalRaceCount()
+const promptDismissed = ref(false)
 
 function formatTime(seconds) {
   const mins = Math.floor(seconds / 60)

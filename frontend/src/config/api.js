@@ -12,6 +12,7 @@ export const API_ENDPOINTS = {
   // Races
   races: '/races',
   raceStats: '/races/stats',
+  importRaces: '/races/import',
 
   // Leaderboard
   leaderboard: '/leaderboard',

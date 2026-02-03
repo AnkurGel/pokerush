@@ -106,6 +106,9 @@ export function usePersonalBests() {
     // Trigger reactivity
     bests.value = { ...bests.value }
 
+    // Explicitly write to localStorage immediately (don't wait for watcher)
+    localStorage.setItem('typeracer-personal-bests', JSON.stringify(bests.value))
+
     return { isNewQuoteRecord, isNewOverall, raceEntry }
   }
 

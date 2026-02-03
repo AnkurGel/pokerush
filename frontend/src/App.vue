@@ -1,4 +1,15 @@
 <template>
+  <!-- Migration Success Toast -->
+  <Transition name="fade">
+    <div
+      v-if="migrationMessage"
+      class="fixed top-4 right-4 z-50 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2"
+    >
+      <span>☁️</span>
+      <span>{{ migrationMessage }}</span>
+    </div>
+  </Transition>
+
   <!-- Auth Modal -->
   <AuthModal
     :is-open="showAuthModal"
@@ -141,6 +152,7 @@
           :overall-best="bests.overallBestWpm"
           @race-again="handleRaceAgain"
           @view-stats="handleViewStats"
+          @show-auth="openAuthModal"
         />
       </div>
 
@@ -168,9 +180,10 @@ const typingAreaRef = ref(null)
 const showLeaderboard = ref(false)
 const showAuthModal = ref(false)
 const authMode = ref('login')
+const migrationMessage = ref('')
 
 // Auth state
-const { user, isGuest, initialize, logout } = useAuth()
+const { user, isGuest, initialize, logout, hasLocalDataToMigrate, migrateLocalData, migrationStatus, fetchAndMergeCloudData } = useAuth()
 
 // Initialize auth on mount
 onMounted(() => {
@@ -222,11 +235,61 @@ function openAuthModal(mode) {
   showAuthModal.value = true
 }
 
-function handleAuthSuccess() {
+async function handleAuthSuccess() {
   // Auth successful, modal will close automatically
+
+  try {
+    // Step 1: Upload local races to cloud (if any)
+    let uploadedCount = 0
+    if (hasLocalDataToMigrate()) {
+      const uploadResult = await migrateLocalData()
+      uploadedCount = uploadResult.imported || 0
+    }
+
+    // Step 2: Fetch cloud races and merge into local storage
+    const mergeResult = await fetchAndMergeCloudData()
+    const downloadedCount = mergeResult.merged || 0
+
+    // Show appropriate message
+    if (uploadedCount > 0 && downloadedCount > 0) {
+      migrationMessage.value = `✓ Synced! ${uploadedCount} uploaded, ${downloadedCount} downloaded`
+    } else if (uploadedCount > 0) {
+      migrationMessage.value = `✓ ${uploadedCount} race${uploadedCount !== 1 ? 's' : ''} synced to cloud!`
+    } else if (downloadedCount > 0) {
+      migrationMessage.value = `✓ ${downloadedCount} race${downloadedCount !== 1 ? 's' : ''} loaded from cloud!`
+    } else if (mergeResult.total > 0) {
+      migrationMessage.value = `✓ ${mergeResult.total} races synced!`
+    }
+
+    // Reload page to refresh all components with merged data
+    // This ensures stats/history components get the updated localStorage
+    if (uploadedCount > 0 || downloadedCount > 0 || mergeResult.total > 0) {
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    }
+  } catch (err) {
+    console.error('Failed to sync data:', err)
+    migrationMessage.value = 'Failed to sync data'
+    setTimeout(() => {
+      migrationMessage.value = ''
+    }, 4000)
+  }
 }
 
 async function handleLogout() {
   await logout()
 }
 </script>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

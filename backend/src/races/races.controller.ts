@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { RacesService } from './races.service';
 import { CreateRaceDto } from './dto/create-race.dto';
+import { ImportRacesDto } from './dto/import-races.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
@@ -36,6 +37,14 @@ export class RacesController {
       pokemonName: race.pokemonName,
       createdAt: race.createdAt,
     };
+  }
+
+  @Post('import')
+  async importRaces(
+    @CurrentUser() user: User,
+    @Body() importRacesDto: ImportRacesDto,
+  ) {
+    return this.racesService.importRaces(user.id, importRacesDto.races);
   }
 
   @Get()

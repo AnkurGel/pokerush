@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Race } from './entities/race.entity';
 import { CreateRaceDto } from './dto/create-race.dto';
+import { ImportRaceItemDto } from './dto/import-races.dto';
 
 @Injectable()
 export class RacesService {
@@ -19,6 +20,32 @@ export class RacesService {
       pokemonName: createRaceDto.pokemonName || '',
     });
     return this.racesRepository.save(race);
+  }
+
+  async importRaces(
+    userId: string,
+    races: ImportRaceItemDto[],
+  ): Promise<{ imported: number }> {
+    const raceEntities = races.map((race) => {
+      const entity = this.racesRepository.create({
+        quoteId: race.quoteId,
+        quoteSource: race.quoteSource || '',
+        wpm: race.wpm,
+        accuracy: race.accuracy,
+        timeSeconds: race.timeSeconds,
+        errors: race.errors,
+        pokemonName: race.pokemonName || '',
+        userId,
+      });
+      // Preserve original date if provided
+      if (race.date) {
+        entity.createdAt = new Date(race.date);
+      }
+      return entity;
+    });
+
+    await this.racesRepository.save(raceEntities);
+    return { imported: raceEntities.length };
   }
 
   async findByUserId(
