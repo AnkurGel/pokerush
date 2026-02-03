@@ -1,18 +1,18 @@
 <template>
   <div class="bg-gray-100 rounded-lg p-6 font-mono text-lg leading-relaxed border-2 border-gray-300">
-    <div class="flex flex-wrap">
+    <div class="whitespace-pre-wrap">
       <!-- Completed text -->
       <span class="text-green-600">{{ completedText }}</span>
 
       <!-- Current character -->
       <span
-        class="relative"
+        class="relative inline-block min-w-[0.5em]"
         :class="{
-          'bg-yellow-200': !hasError,
-          'bg-red-300 animate-shake': hasError
+          'bg-yellow-200 rounded': !hasError,
+          'bg-red-300 animate-shake rounded': hasError
         }"
       >
-        {{ currentChar || '' }}
+        <span :class="{ 'opacity-50': currentChar === ' ' }">{{ displayCurrentChar }}</span>
         <span
           v-if="isActive"
           class="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500 cursor-blink"
@@ -31,7 +31,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   completedText: {
     type: String,
     default: ''
@@ -56,5 +58,13 @@ defineProps({
     type: Boolean,
     default: false
   }
+})
+
+// Show a visible indicator for space character
+const displayCurrentChar = computed(() => {
+  if (props.currentChar === ' ') {
+    return '·' // middle dot to indicate space
+  }
+  return props.currentChar || ''
 })
 </script>
